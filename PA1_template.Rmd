@@ -65,13 +65,23 @@ It's the interval with the id 835
 
 ## Imputing missing values
 ### Calculate and report the total number of missing values in the dataset
-There are 2304 NA's based on the summary() function
+There are 2304 NA's based on the summary() function. Note that there are always entire days that are missing while all others are complete. 
 ```{r}
 summary(data)
 summary(good)
 ```
 ### Devise a strategy for filling in all of the missing values in the dataset
-I think the mean of the interval rounded to an integer is a good value to replace the NAs with. The values of a given interval are quite stable over the days.
+In this dataset the NA's are always whole days. Linear interpolatation of the NA's is therefore not possible.
+
+I think **the mean of the interval over all available days - rounded to an integer** is a good value to replace the NAs with. The values of a given interval are more stable over the days than the values within a day.
+
+Alternatives might be
+* set NA's to 0: but this would lower all averages below the true level
+* set NA's to "total steps per day diveded by 288"" (evenly distributed over the whole day): but this is an unplausible assumption, because the activity varies heavily within the day.
+ 
+```{r}
+qplot(interval, steps, data=data2) + stat_summary(fun.y=mean, colour="red", geom="line", size=2)
+```
 
 ### Create a new dataset that is equal to the original dataset but with the missing data filled in
 First merge the dataset with the mean of the steps by interval - which serves as default value for an interval - and sort it back.
@@ -108,18 +118,21 @@ median(total_steps_by_day$x)
 The numbers differ a little bit from the ones that were calculated without the NA's. But the difference is very small (< 0.1%).
 
 ### What is the impact of imputing missing data on the estimates of the total daily number of steps?
+There is always an impact of imputing missing data. In my example the mean and median are a little bit lower.
 
-*Keine Ahnung was das soll*
+The choice of a good imputing strategy is an important step and needs thorough consideration. The more domain expertise there is, the better! The strategy must look at effects like usual behaviour of the subject/customers, weather conditions, typical patterns of activity or bank holidays.
 
 ## Are there differences in activity patterns between weekdays and weekends?
 To answer this questions we need to add grouping information to the dataset that indicates whether a day is a weekday or a weekend day.
+
 ### Create a new factor variable in the dataset with two levels
+I need to switch my system setting to English to get the English abbreviated day labels.
 ```{r}
 Sys.setlocale("LC_TIME", "English")
 data5$dayofweek <- weekdays(data5$date, abbreviate=T)
 head(data5)
 ```
-And loop again through the dataset to determine weekend days:
+And loop again through the dataset to determine weekend days and finally factorize the column:
 ```{r}
 data5$weekdaycategory <- "weekday"
 for (i in 1:nrow(data5) ) {
@@ -133,10 +146,14 @@ str(data5)
 ### Make a panel plot containing a time series plot
 Split the graph into weekdays/weekends with the average steps taken per interval:
 ```{r}
-g2 <- ggplot(data=data5, mapping=aes(x=interval, y=steps))
-g2 + facet_grid(weekdaycategory ~ .) + layer(geom = "line",
-                  stat = "summary",
-                  fun.y = "mean")
+g <- ggplot(data5, mapping=aes(x=interval, y=steps))
+g + facet_wrap(~weekdaycategory, ncol=1) + layer(geom = "line", col="blue", stat = "summary", fun.y = "mean") + theme(strip.background = element_rect(fill="peachpuff")) + theme(panel.background = element_rect(fill = "white")) + labs(y="Number of steps", x="Interval") 
 ```
 
-Uff... This was an extremly hard piece!
+### Finalize
+To finalize I delete the unzipped file to save time when uploading to github
+```{r}
+file.remove("activity.csv")
+```
+
+Uff... This was an extremly hard piece of work! I am looking forward to looking at my peers' solutions.

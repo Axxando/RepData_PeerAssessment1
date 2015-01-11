@@ -1,0 +1,14 @@
+data4 <- merge(data, mean_steps_by_interval, by.x="interval", by.y="Group.1")
+data5 <- data4[with(data4, order(date, interval)), ]
+
+function(z){replace(z, is.na(z), 0)}
+data5$clean[is.na(data5$steps)] <- data5$x
+sapply(data5, function() {data5$clean[is.na(data5$steps)] <- data5$x})
+
+apply(data5, 1, function(x) {ifelse(is.na(x[2]),x[2]<-x[4],x[2])})
+apply(data5, 1, function(x) {if(is.na(x[2])) x[2] else x[4]})
+apply(data5, 1, function(x) {if(is.na(x[2])) x[2]<-0})
+
+for (i in 1:nrow(data5) ) {
+    if (is.na(data5[i,2])) data5[i,2] <- data5[i,4]
+}
